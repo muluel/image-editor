@@ -22,6 +22,7 @@ export class CanvasManager {
         this.initializeEventListeners();
         this.initializeTooltips();
         this.initializeShortcutsPanel();
+        this.addRectangleList();
     }
 
     initializeEventListeners() {
@@ -51,7 +52,7 @@ export class CanvasManager {
     getShortcutForAction(action) {
         const shortcuts = {
             'Greyscale': 'G',
-            'Save Image': this.isMac ? '⌘ + S' : 'Ctrl + S',
+            'Save Image': this.isMac ? '⌘ + S' : 'Ctrl + S', // TODO
             'Clear Rectangles': this.isMac ? '⌘ + Delete' : 'Ctrl + Delete',
             'Undo Last Rectangle': this.isMac ? '⌘ + Z' : 'Ctrl + Z'
         };
@@ -105,25 +106,33 @@ export class CanvasManager {
         }
 
         if (this.selectedRect && !this.isDrawing && !this.isDragging) {
-            const shift = e.shiftKey ? 10 : 1; // Faster movement with shift
+            const shift = e.shiftKey ? 15 : 1; // Faster movement with shift
             let moved = false;
             
             switch(e.key) {
                 case 'ArrowLeft':
                     e.preventDefault();
+                    this.selectedRect.x = Math.min(
+                        this.canvas.width - this.selectedRect.width,
+                        this.selectedRect.x - shift
+                    );
                     moved = true;
                     break;
                     
                 case 'ArrowRight':
                     e.preventDefault();
-                    this.selectedRect.x += Math.min(
-                        this.canvas.width = this.selectedRect.width,
+                    this.selectedRect.x = Math.min(
+                        this.canvas.width - this.selectedRect.width,
                         this.selectedRect.x + shift
                     );
                     moved = true;
                     break;
                 case 'ArrowUp':
                     e.preventDefault();
+                    this.selectedRect.y = Math.min(
+                        this.canvas.height - this.selectedRect.height,
+                        this.selectedRect.y - shift
+                    )
                     moved = true
                     break;
                 case 'ArrowDown':
@@ -154,19 +163,20 @@ export class CanvasManager {
         }
     }
 
-    showFeedback(message) {
+    showFeedback(message) {        
         let feedback = document.getElementById('action-feedback');
         if (!feedback) {
             feedback = document.createElement('div');
             feedback.id = 'action-feedback';
             feedback.style.position = 'fixed';
-            feedback.style.bottom = '20px';
+            feedback.style.top= '20px';
             feedback.style.right = '20px';
             feedback.style.padding = '10px 20px';
             feedback.style.background = 'rgba(0, 0, 0, 0.8)';
             feedback.style.color = 'white';
             feedback.style.borderRadius = '4px';
             feedback.style.zIndex = '1000';
+            feedback.style.background = "#ff4242";
             document.body.appendChild(feedback);
         }
     
@@ -306,9 +316,9 @@ export class CanvasManager {
             const width = x - this.startX;
             const height = y - this.startY;
     
-            // Only create rectangle if it has some size
+
             if (Math.abs(width) > 5 && Math.abs(height) > 5) {
-                this.saveState(); // Save state before adding new rectangle
+                this.saveState();
                 
                 const newRect = {
                     x: Math.min(this.startX, x),
@@ -323,11 +333,18 @@ export class CanvasManager {
                 this.updateRectangleSpecs(newRect);
                 this.showFeedback('Rectangle Created');
             }
-        }
-    
-        if (!this.isDrawMode && this.isDragging && this.selectedRect) {
-            this.saveState(); // Save state after moving rectangle
+        } else if (!this.isDrawMode && this.isDragging && this.selectedRect) {
+            this.saveState();
             this.showFeedback('Rectangle Moved');
+        }
+        else if (this.isDrawing ){
+            this.isDrawing = false;
+            if (this.tempRect && this.tempRect.width > 5 && this.tempRect.height > 5) {
+                this.saveState();
+                this.rectangles.push({ ...this.tempRect });
+                this.showFeedback('Rectangle Created');
+            }
+            this.tempRect = null;
         }
     
         this.isDrawing = false;
@@ -476,6 +493,7 @@ export class CanvasManager {
                 width: 100,
                 height: 100,
             });
+            this.addRectangleList()
         }
     }
 
@@ -493,4 +511,64 @@ export class CanvasManager {
 
         this.showFeedback(this.isDrawMode ? 'Draw Mode' : 'Select Mode');
     }
+
+    addRectangleList() {
+        // Create or get the rectangle list container
+        const listContainer = document.getElementById('rectangle-list') || this.createRectangleList();
+        
+        // Clear existing list
+        listContainer.innerHTML = '';
+        
+        
+        // Create list items for each rectangle
+        this.rectangles.forEach((rect) => {
+            const listItem = document.createElement('div');
+            listItem.className = 'rectangle-list-item';
+            if (rect === this.selectedRect) {
+                listItem.className += ' selected';
+            }
+            
+            listItem.innerHTML = `
+                <span>Rectangle ${index + 1}
+                <div class="rectangle-details">
+                    <span>X: ${Math.round(rect.x)}
+                    <span>Y: ${Math.round(rect.y)}
+                    <span>W: ${Math.round(rect.width)}
+                    <span>H: ${Math.round(rect.height)}
+                </div>
+            `;
+            
+            // Add click handler for selection
+            listItem.addEventListener('click', () => {
+                this.selectedRect = rect;
+                this.updateRectangleSpecs(rect);
+                this.redraw();
+                this.addRectangleList(); // Refresh list to show selection
+            });
+            
+            // Add delete button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-rect-btn';
+            deleteBtn.innerHTML = '×';
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.saveState();
+                this.removeRectangle(index);
+                this.showFeedback('Rectangle Deleted');
+                this.addRectangleList();
+            });
+            
+            listItem.appendChild(deleteBtn);
+            listContainer.appendChild(listItem);
+        });
+    }
+    
+    createRectangleList() {
+        const container = document.createElement('div');
+        container.id = 'rectangle-list';
+        container.className = 'rectangle-list';
+        document.body.appendChild(container);
+        return container;
+    }
+
 }

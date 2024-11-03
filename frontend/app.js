@@ -140,22 +140,27 @@ window.greyScale = function() {
 };
 
 window.saveImage = function() {
-    canvasManager.canvas.toBlob(function (blob) {
-        const formData = new FormData();
-        formData.append("name", "edited_image.png");
-        formData.append('image', blob, 'edited_image.png');
-        
-        fetch(`${ApiUrl}/images/`, {
-            method: 'POST',
-            body: formData,
-        })
-        .then(response => response.json())
-        .then(() => fetchImages())
-        .catch(error => console.error('Error:', error));
-    });
+    if (canvasManager.rectangles.length == 0 && canvasManager.backgroundImage == undefined){
+        canvasManager.showFeedback('No image to save', 'red');
+    }else{
+        console.log("Saving image");
+        canvasManager.canvas.toBlob(function (blob) {
+            const formData = new FormData();
+            formData.append("name", "edited_image.png");
+            formData.append('image', blob, 'edited_image.png');
+            
+            fetch(`${ApiUrl}/images/`, {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(() => fetchImages())
+            .catch(error => console.error('Error:', error));
+        });
+    }
 };
 
-function fetchImages() {
+async function fetchImages() {
     fetch(`${ApiUrl}/images/`)
         .then(response => response.json())
         .then(data => updateImageList(data))
@@ -165,7 +170,7 @@ function fetchImages() {
 function updateImageList(images) {
     const listBox = document.getElementById('image-list');
     listBox.innerHTML = '';
-    
+    images = images.reverse();
     images.forEach(image => {
         const imgElement = document.createElement('img');
         imgElement.src = image.image;
