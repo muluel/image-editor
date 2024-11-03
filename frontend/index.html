@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Editor</title>
+  <link rel="stylesheet" href="app.css">
+  <script type="module" src="app.js"></script>
+</head>
+
+<body>
+  <div class="container">
+    <div class="editor-section">
+      <h2 class="section-title">Image Editor</h2>
+      <div class="controls">
+        <div class="file-input-wrapper">
+          <input type="file" id="upload-image" accept="image/*">
+        </div>
+        <div class="tools">
+          <button class="btn" onclick="greyScale()">Greyscale</button>
+          <button class="btn" onclick="saveImage()">Save Image</button>
+          <button class="btn btn-secondary" onclick="clearRectangles()">Clear Rectangles</button>
+          <button class="btn btn-secondary" onclick="undoLastRectangle()">Undo Last Rectangle</button>
+        </div>
+        <button class="btn" id="toggleModeBtn" data-tooltip="Spacebar">
+          <span class="mode-text">Select Mode
+        </button>
+      </div>
+
+      <canvas id="editor-canvas" width="800" height="600"></canvas>
+
+      <div class="rectangle-specs">
+        <h3 class="properties-title">Rectangle Properties</h3>
+        <span>
+          <label>X: <input type="number" id="x-pos" value="10"></label>
+          <label>Y: <input type="number" id="y-pos" value="10"></label>
+
+          <span>
+            <label>Width: <input type="number" id="rect-width" value="100"></label>
+            <label>Height: <input type="number" id="rect-height" value="100"></label>
+
+            <div class="color-picker">
+              <div class="color-inputs">
+                <label>
+                  R: <input type="number" id="red" value="0" min="0" max="255">
+                </label>
+                <label>
+                  G: <input type="number" id="green" value="0" min="0" max="255">
+                </label>
+                <label>
+                  B: <input type="number" id="blue" value="0" min="0" max="255">
+                </label>
+                <label>
+                  A: <input type="number" id="alpha" value="100" min="0" max="100" step="1">
+                </label>
+              </div>
+              <div class="color-preview">
+                <label>Color: <input type="color" id="rect-color" value="#000000"></label>
+                <div id="color-preview-box"></div>
+              </div>
+            </div>
+            <button class="btn" onclick="drawRectangle(
+              document.getElementById('x-pos').value,
+              document.getElementById('y-pos').value,
+              document.getElementById('rect-width').value,
+              document.getElementById('rect-height').value
+          )">Draw Custom Rectangle</button>
+      </div>
+
+      <div class="rectangle-list-container">
+        <h3 class="properties-title">Rectangle List</h3>
+        <div id="rectangle-list"></div>
+
+      </div>
+
+      <div class="keyboard-shortcuts">
+        <h3>Keyboard Shortcuts <button class="toggle-shortcuts" title="Toggle Shortcuts Panel">▼</button></h3>
+        <div class="shortcuts-content">
+          <table>
+            <tr>
+              <th>Action</th>
+              <th>Windows</th>
+              <th>Mac</th>
+            </tr>
+            <tr>
+              <td>Delete Rectangle</td>
+              <td>Delete</td>
+              <td>fn + Backspace</td>
+            </tr>
+            <tr>
+              <td>Undo</td>
+              <td>Ctrl + Z</td>
+              <td>⌘ + Z</td>
+            </tr>
+            <tr>
+              <td>Redo</td>
+              <td>Ctrl + Shift + Z</td>
+              <td>⌘ + Shift + Z</td>
+            </tr>
+            <tr>
+              <td>Toggle Draw/Select</td>
+              <td>Spacebar</td>
+              <td>Spacebar</td>
+            </tr>
+            <tr>
+              <td>Move Rectangle</td>
+              <td>Arrow Keys</td>
+              <td>Arrow Keys</td>
+            </tr>
+            <tr>
+              <td>Deselect Rectangle</td>
+              <td>Esc</td>
+              <td>Esc</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+
+
+    <div class="image-list-section">
+      <h2 class="section-title">Saved Images</h2>
+      <div id="image-list">
+        <!-- Images will be loaded here dynamically -->
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
